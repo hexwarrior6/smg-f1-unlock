@@ -35,7 +35,7 @@
 
 ## 快速开始
 
-### 方式一：Console 粘贴（最简单，每次刷新后要重新粘贴）
+### 方式一：Console 粘贴（最简单，每次刷新后要重新粘贴，20260705亲测可用有效，强烈推荐）
 
 1. 用 Edge / Chrome 打开 https://live.kankanews.com/huikan?id=10
 2. 按 **F12** → 点 **Console** 标签
@@ -56,7 +56,7 @@ v.initPlayer();
 
 ---
 
-### 方式二：Tampermonkey 脚本（自动运行，推荐）
+### 方式二：Tampermonkey 脚本（自动运行，理论上可行，但我用不了，这里力荐方式一）
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器插件
 2. 点击 Tampermonkey 图标 → **创建新脚本**
