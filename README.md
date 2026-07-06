@@ -6,7 +6,7 @@
 
 这是因为服务端返回的节目数据中 `is_shield=1`，且频道带有 `copyright_image` 版权遮罩图，前端据此拦截播放。
 
-本项目提供**两种方式**绕过这个限制。
+本项目提供**三种方式**绕过这个限制。
 
 ---
 
@@ -72,7 +72,50 @@ v.initPlayer();
 
 ---
 
-## 兼容性
+### 方式三：PowerShell 自动化脚本（全自动，无需浏览器插件，强烈推荐，可以开干净的直播窗口全屏看）
+
+双击 `run.bat`，脚本会自动：
+1. 打开 Edge 浏览器并启动远程调试端口
+2. 通过 CDP（Chrome DevTools Protocol）注入 JS，绕过版权限制
+3. 提取 HLS 流地址（m3u8）
+4. 打开 `player.html` 在新标签播放
+5. **每 35 分钟自动刷新**（token 约 1 小时过期）
+
+```bat
+# 只需一步
+run.bat
+```
+
+**工作流：**
+
+```
+run.bat
+  └→ kankanews-bypass.ps1
+        ├→ 启动 Edge（--remote-debugging-port=19222）
+        ├→ 导航到 https://live.kankanews.com/huikan?id=10
+        ├→ 等待页面加载（5s）
+        ├→ CDP WebSocket 注入 JavaScript:
+        │    1. 找到 Vue 组件 HuikanIndex
+        │    2. programObj.is_shield = 0
+        │    3. 调 initPlayer()
+        ├→ 等待流加载（6s）
+        ├→ 从 performance 日志提取 m3u8 URL
+        ├→ 用 Edge 打开 player.html#URL（URL 放 hash 里）
+        └→ 每 35 分钟循环: 重新 bypass → 提新 URL → 开新播放器
+
+player.html
+  └→ 读取 location.hash 里的 m3u8 URL
+  └→ hls.js 解码播放
+  └→ 粘贴/复制/刷新按钮（手动备用）
+```
+
+**数据流：** `.bat` → `.ps1` → CDP 操作 Edge → 取 m3u8 → 开 `.html#URL` → hls.js 播
+
+**原理：** PowerShell 用 C# 的 `ClientWebSocket` 连接 Edge 的 CDP WebSocket 接口，通过 `Runtime.evaluate` 在页面上下文中执行 JavaScript（修改 `is_shield` → 调用 `initPlayer()` → 从 `performance.getEntriesByType('resource')` 提取 m3u8 URL）。
+
+**要求：** Windows + Edge/Chrome，无需安装任何额外软件。
+
+---
 
 - ✅ **Edge** / **Chrome** 最新版
 - ✅ **Tampermonkey** / **Violentmonkey**
