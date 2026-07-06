@@ -48,6 +48,10 @@ if (-not $tab) { $tab = $tabs | Select-Object -First 1 }
 $wsUrl = $tab.webSocketDebuggerUrl
 Write-Host "  Connected to: $($tab.title)"
 
+# Get browser-level CDP endpoint (needed for Target.createTarget / closeTarget)
+$ver = Invoke-RestMethod "http://localhost:$Port/json/version" -ErrorAction Stop
+$browserWsUrl = $ver.webSocketDebuggerUrl
+
 # Helper: evaluate JS via CDP
 function EvalJS($id, $js) {
     $e = $js -replace '"', '\"'
@@ -110,17 +114,24 @@ $m3u8 = WaitForM3u8
 if ($m3u8) {
     Write-Host "  Stream URL found!"
     $enc = [System.Uri]::EscapeDataString($m3u8)
-    $pPathEnc = [System.Uri]::EscapeDataString($PlayerPath.Replace('\','/'))
 
-    Write-Host "[4] Opening player..."
-    Start-Process "msedge.exe" "file:///$($PlayerPath.Replace('\','/'))#$enc"
-    Write-Host "  Player opened. Close this window when done."
+    Write-Host "[4] Opening player (same browser instance)..."
+
+    # Build player URL
+    $playerFileUrl = "file:///$($PlayerPath.Replace('\','/'))#$enc"
+
+    # Create player tab via CDP (same browser instance, controllable)
+    $playerResult = [CDP]::Send($browserWsUrl, "{`"id`":100,`"method`":`"Target.createTarget`",`"params`":{`"url`":`"$playerFileUrl`"}}") | ConvertFrom-Json
+    $playerTargetId = $playerResult.result.targetId
+    Write-Host "  Player opened (target: $playerTargetId). Close this window when done."
     Write-Host ""
 
     # Auto-refresh loop
     while ($true) {
         Start-Sleep ($IntervalMin * 60)
         Write-Host "[refresh] Getting new stream URL..."
+
+        # Re-bypass shield and init new HLS stream
         $r = EvalJS 1 @"
 (function() {
     var vue = document.querySelector('#__nuxt').__vue__;
@@ -145,8 +156,17 @@ if ($m3u8) {
         if ($newUrl -and $newUrl -ne $m3u8) {
             $m3u8 = $newUrl
             $enc = [System.Uri]::EscapeDataString($m3u8)
-            Start-Process "msedge.exe" "file:///$($PlayerPath.Replace('\','/'))#$enc"
-            Write-Host "  Stream refreshed"
+            $newPlayerUrl = "file:///$($PlayerPath.Replace('\','/'))#$enc"
+
+            # Close old player tab
+            [CDP]::Send($browserWsUrl, "{`"id`":200,`"method`":`"Target.closeTarget`",`"params`":{`"targetId`":`"$playerTargetId`"}}") >$null
+            Write-Host "  Closed old player tab"
+
+            # Open new player tab with fresh token
+            Start-Sleep 1
+            $playerResult = [CDP]::Send($browserWsUrl, "{`"id`":201,`"method`":`"Target.createTarget`",`"params`":{`"url`":`"$newPlayerUrl`"}}") | ConvertFrom-Json
+            $playerTargetId = $playerResult.result.targetId
+            Write-Host "  Stream refreshed (new target: $playerTargetId)"
         }
     }
 } else {
