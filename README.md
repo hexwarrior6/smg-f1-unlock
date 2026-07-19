@@ -35,7 +35,23 @@
 
 ## 快速开始
 
-### 方式一：Console 粘贴（最简单，每次刷新后要重新粘贴，20260705亲测可用有效，强烈推荐）
+---
+
+### 方式一：Tampermonkey/Violentmonkey 脚本（推荐）
+
+1. 安装 <img src="https://violentmonkey.github.io/_astro/vm.C4h557K-.png" height="20" align="center"> [Violentmonkey](https://violentmonkey.github.io/) 浏览器插件（首次安装插件记得在[插件设置界面](browser://extensions/?id=jinjaccalgkegednnccohejagnlnfdag)开启"允许运行用户脚本"选项）
+4. 点击 [安装脚本](https://github.com/hexwarrior6/smg-f1-unlock/raw/refs/heads/main/smg_f1_unlock.user.js)
+5. 打开 https://live.kankanews.com/huikan?id=10 即可自动生效
+
+脚本会自动：
+- 注入 CSS 隐藏 `.image-mask`
+- 拦截 XHR / fetch API，修改版权字段
+- 找到 Vue 组件打补丁，初始化播放器
+- 拦截试看倒计时、标签页切换暂停等
+
+---
+
+### 方式二：Console 命令（每次打卡/刷新页面后要重复操作）
 
 1. 用 Edge / Chrome 打开 https://live.kankanews.com/huikan?id=10
 2. 按 **F12** → 点 **Console** 标签
@@ -53,67 +69,6 @@ v.initPlayer();
 4. 播放器出现，开始观看。
 
 > ⚠️ 刷新页面后需要重新粘贴。切换频道不受影响（脚本已自动拦截后续 API）。
-
----
-
-### 方式二：Tampermonkey 脚本（自动运行，理论上可行，但我用不了，这里力荐方式一）
-
-1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器插件
-2. 点击 Tampermonkey 图标 → **创建新脚本**
-3. 把 `smg_fivestar.user.js` 的全部内容粘贴进去
-4. **Ctrl+S 保存**
-5. 打开 https://live.kankanews.com/huikan?id=10 即可自动生效
-
-脚本会自动：
-- 注入 CSS 隐藏 `.image-mask`
-- 拦截 XHR / fetch API，修改版权字段
-- 找到 Vue 组件打补丁，初始化播放器
-- 拦截试看倒计时、标签页切换暂停等
-
----
-
-### 方式三：PowerShell 自动化脚本（全自动，无需浏览器插件，强烈推荐，可以开干净的直播窗口全屏看）
-
-双击 `run.bat`，脚本会自动：
-1. 打开 Edge 浏览器并启动远程调试端口
-2. 通过 CDP（Chrome DevTools Protocol）注入 JS，绕过版权限制
-3. 提取 HLS 流地址（m3u8）
-4. 打开 `player.html` 在新标签播放
-5. **每 35 分钟自动刷新**（token 约 1 小时过期）
-
-```bat
-# 只需一步
-run.bat
-```
-
-**工作流：**
-
-```
-run.bat
-  └→ kankanews-bypass.ps1
-        ├→ 启动 Edge（--remote-debugging-port=19222）
-        ├→ 导航到 https://live.kankanews.com/huikan?id=10
-        ├→ 等待页面加载（5s）
-        ├→ CDP WebSocket 注入 JavaScript:
-        │    1. 找到 Vue 组件 HuikanIndex
-        │    2. programObj.is_shield = 0
-        │    3. 调 initPlayer()
-        ├→ 等待流加载（6s）
-        ├→ 从 performance 日志提取 m3u8 URL
-        ├→ 用 Edge 打开 player.html#URL（URL 放 hash 里）
-        └→ 每 35 分钟循环: 重新 bypass → 提新 URL → 开新播放器
-
-player.html
-  └→ 读取 location.hash 里的 m3u8 URL
-  └→ hls.js 解码播放
-  └→ 粘贴/复制/刷新按钮（手动备用）
-```
-
-**数据流：** `.bat` → `.ps1` → CDP 操作 Edge → 取 m3u8 → 开 `.html#URL` → hls.js 播
-
-**原理：** PowerShell 用 C# 的 `ClientWebSocket` 连接 Edge 的 CDP WebSocket 接口，通过 `Runtime.evaluate` 在页面上下文中执行 JavaScript（修改 `is_shield` → 调用 `initPlayer()` → 从 `performance.getEntriesByType('resource')` 提取 m3u8 URL）。
-
-**要求：** Windows + Edge/Chrome，无需安装任何额外软件。
 
 ---
 

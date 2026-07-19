@@ -1,9 +1,11 @@
 // ==UserScript==
-// @name             收看SMGTV电视节目
+// @name             SMG-F1节目解锁
+// @description      解锁SMG-F1节目，解除试看倒计时与切页暂停等限制
+// @version          1.0
+// @updateURL        https://github.com/hexwarrior6/smg-f1-unlock/raw/refs/heads/main/smg_f1_unlock.user.js
+// @downloadURL      https://github.com/hexwarrior6/smg-f1-unlock/raw/refs/heads/main/smg_f1_unlock.user.js
 // @namespace        http://tampermonkey.net/
-// @version          0.9
-// @description      打开网页即可收看SMGTV，并解除试看倒计时与切页暂停等限制
-// @author           https://github.com/Popukok
+// @author           https://github.com/hexwarrior6
 // @match            *://*.kankanews.com/*
 // @include          *://live.kankanews.com/*
 // @icon             https://live.kankanews.com/favicon.ico
@@ -14,14 +16,14 @@
 (function() {
     "use strict";
 
-    console.log("[SMGTV] ========== v0.9 ==========");
-    console.log("[SMGTV] URL:", location.href);
+    console.log("[SMG-F1] ========== v1.0 ==========");
+    console.log("[SMG-F1] URL:", location.href);
 
     // ===== 1. CSS: hide copyright mask =====
     var style = document.createElement("style");
     style.textContent = ".image-mask{display:none!important}.video-tip{display:none!important}";
     (document.head || document.documentElement).appendChild(style);
-    console.log("[SMGTV] CSS injected");
+    console.log("[SMG-F1] CSS injected");
 
     // ===== 2. Intercept API responses =====
 
@@ -51,7 +53,7 @@
                             }
                         }
                         if (changed) {
-                            console.log("[SMGTV] XHR patched");
+                            console.log("[SMG-F1] XHR patched");
                             Object.defineProperty(xhr, "responseText", {
                                 value: JSON.stringify(data), writable: false
                             });
@@ -86,7 +88,7 @@
                         }
                     }
                     if (changed) {
-                        console.log("[SMGTV] fetch patched");
+                        console.log("[SMG-F1] fetch patched");
                         return new Response(JSON.stringify(data), {
                             status: resp.status, statusText: resp.statusText, headers: resp.headers
                         });
@@ -98,7 +100,7 @@
         return origFetch.apply(this, arguments);
     };
 
-    console.log("[SMGTV] API interceptors ready");
+    console.log("[SMG-F1] API interceptors ready");
 
     // ===== 3. Patch Vue component =====
     function tryPatch() {
@@ -107,7 +109,7 @@
         var vue = el.__vue__;
         if (!vue || typeof vue.initPlayer !== "function") return false;
 
-        console.log("[SMGTV] Vue component found, patching...");
+        console.log("[SMG-F1] Vue component found, patching...");
 
         function fixObj(o) {
             if (!o) return;
@@ -143,19 +145,19 @@
 
         // Init player
         if (!vue.player && vue.programObj && vue.programObj.id) {
-            console.log("[SMGTV] Calling initPlayer()...");
-            try { vue.initPlayer(); } catch(e) { console.error("[SMGTV] initPlayer error:", e); }
+            console.log("[SMG-F1] Calling initPlayer()...");
+            try { vue.initPlayer(); } catch(e) { console.error("[SMG-F1] initPlayer error:", e); }
         }
 
         vue.__smgPatched = true;
-        console.log("[SMGTV] Patch applied!");
+        console.log("[SMG-F1] Patch applied!");
         return true;
     }
 
     if (tryPatch()) {
-        console.log("[SMGTV] Patched immediately");
+        console.log("[SMG-F1] Patched immediately");
     } else {
-        console.log("[SMGTV] Waiting for component...");
+        console.log("[SMG-F1] Waiting for component...");
         var observer = new MutationObserver(function() {
             if (tryPatch()) observer.disconnect();
         });
@@ -167,10 +169,10 @@
             if (tryPatch()) {
                 clearInterval(timer);
                 observer.disconnect();
-                console.log("[SMGTV] Patched after " + count + " polls");
+                console.log("[SMG-F1] Patched after " + count + " polls");
             } else if (count >= 60) {
                 clearInterval(timer);
-                console.warn("[SMGTV] Timeout after 30s");
+                console.warn("[SMG-F1] Timeout after 30s");
             }
         }, 500);
     }
