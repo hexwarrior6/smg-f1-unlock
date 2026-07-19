@@ -39,7 +39,7 @@
 
 ### 方式一：Tampermonkey/Violentmonkey 脚本（推荐）
 
-1. 安装 <img src="https://violentmonkey.github.io/_astro/vm.C4h557K-.png" height="20" align="center"> [Violentmonkey](https://violentmonkey.github.io/) 浏览器插件（首次安装插件记得在[插件设置界面](browser://extensions/?id=jinjaccalgkegednnccohejagnlnfdag)开启"允许运行用户脚本"选项）
+1. 安装 <img src="https://violentmonkey.github.io/_astro/vm.C4h557K-.png" height="20" align="center"> [Violentmonkey](https://violentmonkey.github.io/) 浏览器插件（首次安装插件记得在插件设置界面(`chrome://extensions/`)开启"允许运行用户脚本"选项）
 4. 点击 [安装脚本](https://github.com/hexwarrior6/smg-f1-unlock/raw/refs/heads/main/smg_f1_unlock.user.js)
 5. 打开 https://live.kankanews.com/huikan?id=10 即可自动生效
 
@@ -51,7 +51,7 @@
 
 ---
 
-### 方式二：Console 命令（每次打卡/刷新页面后要重复操作）
+### 方式二：Console 命令（每次打开/刷新页面后要重复操作）
 
 1. 用 Edge / Chrome 打开 https://live.kankanews.com/huikan?id=10
 2. 按 **F12** → 点 **Console** 标签
